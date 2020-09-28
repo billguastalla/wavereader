@@ -2,10 +2,10 @@
 
 <img src="https://billguastalla.com/binaries/wavereader/github_resources/wave-highlight.png" width="250" alt="audio displayed in the style of an oscilloscope">
 
-Waveread is a tiny library that reads audio from common variants of the WAVE file specification. It has a small caching mechanism to minimise memory footprint, which will load audio in the background. The caching system is a bit like for an online player. As such it is designed in mind of programs that use audio data chronologically, piece by piece.
+Waveread is a reluctant re-invention of the wheel: a tiny C++11 library that reads audio from common variants of the WAVE file specification.
+
+It leaves the IO itself to a filestream like std::ifstream or whatever std::istream you give to it. It has a caching mechanism to minimise memory footprint, which will load audio in the background, acting as a basic emulation of the effect an online player.
 
 <img src="https://billguastalla.com/binaries/wavereader/github_resources/loadingbar.png" width="250" alt="media player loading bar">
 
-## Formats supported
-
-Waveread supports uncompressed WAVE files with 8-bit unsigned, or 16,24,32-bit signed integers.
+Waveread supports uncompressed WAVE files with 8-bit unsigned, or 16,24,32-bit signed integers. You can find some samples to test it with (here)[https://billguastalla.com/binaries/wavereader/github_resources/samples.zip].
