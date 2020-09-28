@@ -2,6 +2,9 @@
 
 <img src="https://billguastalla.com/binaries/wavereader/github_resources/wave-highlight.png" width="250" alt="audio displayed in the style of an oscilloscope">
 
+![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square) 
+![Language](https://img.shields.io/badge/language-C++-blue.svg?style=flat-square) 
+
 Waveread is a reluctant re-invention of the wheel: a tiny C++11 library that reads audio from common variants of the WAVE file specification.
 
 It leaves the IO implementation to the std::istream you provide it with. It has a caching mechanism to minimise memory footprint, which will load audio in the background, emulating the buffering effect of an online player.
