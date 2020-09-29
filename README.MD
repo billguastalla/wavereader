@@ -18,7 +18,7 @@ Waveread supports uncompressed WAVE files with 8-bit unsigned, or 16,24,32-bit s
 
 ## usage
 
-Construct a `std::istream`, pass it to a `std::shared_ptr` and provide that to an instance of `Waveread`. Then get audio using `audio()`
+You can include <a href="https://raw.githubusercontent.com/billguastalla/wavereader/master/src/waveread.h">waveread.h</a> in your project as a single file. Construct a `std::istream`, pass it to a `std::shared_ptr` and provide that to an instance of `Waveread`. Then get audio using `audio()`
 
 ```cpp
 #include "waveread.h"
@@ -45,7 +45,7 @@ C1S1 C2S1 C1S2 C2S2
 
 ## cmake
 
-You build Waveread in the canonical way,
+Waveread uses cmake to produce a build system in the canonical way,
 ```
 git clone https://www.github.com/billguastalla/wavereader.git
 cd wavereader
