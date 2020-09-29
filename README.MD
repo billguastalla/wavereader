@@ -18,6 +18,8 @@ Waveread supports uncompressed WAVE files with 8-bit unsigned, or 16,24,32-bit s
 
 ## usage
 
+Construct a `std::istream`, pass it to a `std::shared_ptr` and provide that to an instance of `Waveread`. Then get audio using `audio()`
+
 ```cpp
 #include "waveread.h"
 
@@ -32,6 +34,8 @@ int main()
 	std::vector<float> audio2{ r.audio(0u, 128u, {0}, 1u) };
 }
 ```
+
+One thing worth noticing is that with a mono file, if you ask for a left and right track like in (A), you'll get two copies of the mono track: the channels parameter in audio() is a `std::set<uint16_t>` and you can pass out of bounds channels that will be modulo'd to produce audio.
 
 ## cmake
 
