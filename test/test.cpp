@@ -1,6 +1,6 @@
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
-#include <waveread.h>
+#include <waveread.hpp>
 #include <array>
 
 constexpr char assetPath[8] = "assets/";
