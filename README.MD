@@ -35,7 +35,13 @@ int main()
 }
 ```
 
+### sample layout
 One thing worth noticing is that with a mono file, if you ask for a left and right track like in (A), you'll get two copies of the mono track: the channels parameter in audio() is a `std::set<uint16_t>` and you can pass out of bounds channels that will be modulo'd to produce audio.
+
+Like in the WAVE specification itself, samples returned from `audio(..)` are interleaved. So when asking for two samples from two channels, you'll get a vector that looks like this
+```
+C1S1 C2S1 C1S2 C2S2
+```
 
 ## cmake
 
