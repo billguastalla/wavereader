@@ -85,10 +85,10 @@ struct WAV_HEADER
 	int32_t m_40_dataSubchunkSize;
 };
 
-class AudioReader
+class Waveread
 {
 public:
-	AudioReader(
+	Waveread(
 		const std::shared_ptr<std::istream>& stream,
 		size_t cacheSize = 2048u,
 		double cacheExtensionThreshold = 0.5
@@ -110,7 +110,7 @@ public:
 
 		m_header.clear();
 	}
-	AudioReader(const AudioReader& other)
+	Waveread(const Waveread& other)
 		:
 		m_stream{ other.m_stream },
 		m_header{ other.m_header },
@@ -153,7 +153,7 @@ public:
 		reset(m_stream);
 	}
 
-	std::vector<float> audio(size_t startSample, size_t sampleCount, std::set<uint16_t> channels = std::set<uint16_t>{1,2}, size_t stride = 0u) // Do we want to guarantee size?
+	std::vector<float> audio(size_t startSample, size_t sampleCount, std::set<uint16_t> channels = std::set<uint16_t>{0,1}, size_t stride = 0u) // Do we want to guarantee size?
 	{
 		size_t startSample_ch_bit{ startSample * m_header.m_32_bytesPerBlock };
 		size_t sampleCount_ch_bit{ sampleCount * m_header.m_32_bytesPerBlock };
@@ -174,7 +174,7 @@ public:
 			std::vector<float> result{ samples(startSample_ch_bit - m_cachePos, sampleCount_ch_bit, channels, stride) };
 			if (startSample_ch_bit > (m_cachePos + (size_t)(m_data.size() * 0.5)))				// case2A: approaching end of cache
 			{
-				std::thread extendBuffer{ &AudioReader::load,this,m_cachePos + (size_t)(m_cacheSize * 0.5), m_cacheSize };
+				std::thread extendBuffer{ &Waveread::load,this,m_cachePos + (size_t)(m_cacheSize * 0.5), m_cacheSize };
 				extendBuffer.detach();
 			}
 			return result;

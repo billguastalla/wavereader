@@ -1,4 +1,6 @@
-# Waveread
+# waveread
+
+Release 0.1 coming soon!
 
 <img src="https://billguastalla.com/binaries/wavereader/github_resources/wave-highlight.png" width="250" alt="audio displayed in the style of an oscilloscope">
 
@@ -14,23 +16,22 @@ It leaves the IO implementation to the std::istream you provide it with. It has 
 
 Waveread supports uncompressed WAVE files with 8-bit unsigned, or 16,24,32-bit signed integers.
 
-<!--
 ## usage
 
+```cpp
+#include "waveread.h"
+
+int main()
+{
+	std::shared_ptr<std::ifstream> fileStream{ new std::ifstream{"file.wav"} };
+	Waveread r{ fileStream };
+
+	// A: two channels: the first 128 samples of the first two channels of audio.
+	std::vector<float> audio1{ r.audio(0u, 128u, { 0,1 }) };
+	// B: one channel: get 128 samples of audio with stride 1: meaning, pick every other sample.
+	std::vector<float> audio2{ r.audio(0u, 128u, {0}, 1u) };
+}
 ```
-		#include "waveread.h"
-		#include <memory>
-		#include <istream>
-		
-		int main()
-		{
-			std::shared_ptr<std::ifstream> fileStream{ new std::ifstream{name} };
-			AudioReader reader{fileStream};
-		
-			for(
-		
-```
--->
 
 ## cmake
 
