@@ -1,4 +1,5 @@
 github_resources/
+build/
 TODO.MD
 
 ## Ignore Visual Studio temporary files, build results, and

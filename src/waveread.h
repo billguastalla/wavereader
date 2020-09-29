@@ -153,7 +153,7 @@ public:
 		reset(m_stream);
 	}
 
-	std::vector<float> audio(size_t startSample, size_t sampleCount, std::set<uint16_t> channels = std::set<uint16_t>{}, size_t stride = 0u) // Do we want to guarantee size?
+	std::vector<float> audio(size_t startSample, size_t sampleCount, std::set<uint16_t> channels = std::set<uint16_t>{1,2}, size_t stride = 0u) // Do we want to guarantee size?
 	{
 		size_t startSample_ch_bit{ startSample * m_header.m_32_bytesPerBlock };
 		size_t sampleCount_ch_bit{ sampleCount * m_header.m_32_bytesPerBlock };
@@ -217,8 +217,8 @@ private:
 	{
 		std::vector<float> result{};
 		if (
-			(posInCache + size) <= m_data.size() &&			// if we're not overshooting the size
-			!channels.empty() 								// if there are channels
+			(posInCache + size) <= m_data.size() &&			// if caller is not overshooting the cache
+			!channels.empty() 								// if caller has provided channels
 			)
 		{
 			std::lock_guard<std::mutex> lock{ m_dataMutex };
