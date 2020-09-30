@@ -21,7 +21,7 @@ Waveread supports uncompressed WAVE files with 8-bit unsigned, or 16,24,32-bit s
 You can include <a href="https://raw.githubusercontent.com/billguastalla/wavereader/master/src/waveread.h">waveread.h</a> in your project as a single file. Construct a `std::istream`, pass it to a `std::shared_ptr` and provide that to an instance of `Waveread`. Then get audio using `audio()`
 
 ```cpp
-#include "waveread.h"
+#include <waveread.h>
 
 int main()
 {
