@@ -6,5 +6,5 @@ add_library(waveread waveread.hpp)
 set_target_properties(waveread PROPERTIES LINKER_LANGUAGE CXX)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-   target_link_libraries(waveioTests PRIVATE Threads::Threads)
+   target_link_libraries(waveread PRIVATE Threads::Threads)
 endif()
