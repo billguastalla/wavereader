@@ -23,6 +23,11 @@ include_directories(${WAVEIO_SOURCE_DIR}/src)
 
 add_executable(waveioTests test.cpp)
 target_link_libraries(waveioTests Catch2::Catch2)
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+   target_link_libraries(waveioTests PRIVATE Threads::Threads)
+endif()
+
 #add_test(NAME MyTest COMMAND waveioTests)
 ExternalData_Add_Test(waveioTestAssets
    NAME MyTest
