@@ -34,10 +34,10 @@ TEST_CASE("Check that unsupported files are stated as unsupported.", "[asdf]" )
 
 TEST_CASE("Check that supported files are supported.", "[asdf]")
 {
-	for (auto supported : supportedFiles)
-	{
+	//for (auto supported : supportedFiles)
+	//{
 
-	}
+	//}
 }
 
 TEST_CASE("demo")
