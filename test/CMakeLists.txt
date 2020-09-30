@@ -22,10 +22,11 @@ include_directories(${WAVEIO_SOURCE_DIR}/src)
 #file(WRITE samples audioSamples)
 
 add_executable(waveioTests test.cpp)
-target_link_libraries(waveioTests Catch2::Catch2)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-   target_link_libraries(waveioTests PRIVATE Threads::Threads)
+   target_link_libraries(waveioTests PUBLIC Catch2::Catch2 PRIVATE Threads::Threads)
+else()
+   target_link_libraries(waveioTests PUBLIC Catch2::Catch2)
 endif()
 
 #add_test(NAME MyTest COMMAND waveioTests)
