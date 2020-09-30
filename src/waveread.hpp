@@ -175,17 +175,17 @@ public:
 			}
 		}
 		else if (startSample_ch_bit >= m_cachePos &&
-			(startSample_ch_bit + sampleCount_ch_bit) <= (m_cachePos + m_data.size()))			// case2: within cache
+			(startSample_ch_bit + sampleCount_ch_bit) <= (m_cachePos + m_data.size()))				// case2: within cache
 		{
 			std::vector<float> result{ samples(startSample_ch_bit - m_cachePos, sampleCount_ch_bit, channels, stride) };
-			if (startSample_ch_bit > (m_cachePos + (size_t)(m_data.size() * 0.5)))				// case2A: approaching end of cache
+			if (startSample_ch_bit > (m_cachePos + (size_t)(m_data.size() * 0.5)))					// case2A: approaching end of cache
 			{
 				std::thread extendBuffer{ &Waveread::load,this,m_cachePos + (size_t)(m_cacheSize * 0.5), m_cacheSize };
 				extendBuffer.detach();
 			}
 			return result;
 		}
-		else																					// case3: within file, outside of cache
+		else																						// case3: within file, outside of cache
 		{
 			if (load(startSample_ch_bit, m_cacheSize > sampleCount_ch_bit ? m_cacheSize : sampleCount_ch_bit)) // load samplecount or cachesize, whichever is greater.
 				return samples(0u, sampleCount_ch_bit, channels, stride);
@@ -237,8 +237,10 @@ private:
 				{
 					for (auto ch : channels)
 					{
+						// NOTE: (a) see narrow_cast<T>(var) (b) addition defined in C++ as: T operator+(const T &a, const T2 &b);
+						// EXCEPTIONS: Integer types smaller than int are promoted when an operation is performed on them.
 						size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
-						int8_t v{ m_data[i + cho] - (int8_t)128u }; // unsigned, so offset by 2^7
+						int8_t v{ m_data[i + cho] - 128 }; // unsigned, so offset by 2^7
 						float v2{ (float)v / (128.f) };
 						result.push_back(v2);
 					}
