@@ -58,3 +58,6 @@ To run tests, you'll need to be connected to the internet at build time, as Wave
 <!-- Waveread is MIT licensed, so you are free to just take a copy of <a href="https://raw.githubusercontent.com/billguastalla/wavereader/master/src/waveread.h">waveread.h</a> -->
 <!-- and copy it into your project, as long as you provide a copy of the <a href="https://raw.githubusercontent.com/billguastalla/wavereader/master/LICENSE.MD">license</a>. -->
 
+## documentation
+
+See <a href="https://billguastalla.com/binaries/wavereader/docs/html/index.html">here</a>.

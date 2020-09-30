@@ -12,6 +12,8 @@ FetchContent_MakeAvailable(Catch2)
 
 include(ExternalData)
 set(ExternalData_URL_TEMPLATES "https://billguastalla.com/binaries/wavereader/github_resources/samples.tar")
+# ISSUE: GITHUB ACTIONS EXTERNALDATA
+
 
 #set(ExternalData_CUSTOM_SCRIPT "ExternalDataCustomScript://<key>/<loc>")
 
@@ -42,6 +44,7 @@ set(ExternalData_BINARY_ROOT ${ASSETS_DIRECTORY})
 add_custom_command(TARGET waveioTests
                    POST_BUILD
                    COMMAND 
+                   dir & 
                    echo "${CMAKE_COMMAND} -E copy samples.tar ${ASSETS_DIRECTORY}/samples.tar" & 
                    ${CMAKE_COMMAND} -E copy samples.tar ${ASSETS_DIRECTORY}/samples.tar & 
                    ${CMAKE_COMMAND} -E chdir ${ASSETS_DIRECTORY} tar vxf samples.tar
