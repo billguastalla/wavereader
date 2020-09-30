@@ -49,11 +49,17 @@ struct WAV_HEADER
 	}
 	void clear()
 	{
+		auto cpy = [](char from[4], char to[4]) // since strcpy is deprecated on windows and strcpy_s absent on *nix.
+		{
+			for (size_t i{ 0u }; i < 4u; ++i)
+				to[i] = from[i];
+		};
 		char none[4]{ "nil" };
-		strcpy_s(m_0_headerChunkID, none);
+
+		cpy(none, m_0_headerChunkID);
 		m_4_chunkSize = 0;
-		strcpy_s(m_8_format, none);
-		strcpy_s(m_12_subchunk1ID, none);
+		cpy(none, m_8_format);
+		cpy(none, m_12_subchunk1ID);
 		m_16_subchunk1Size = 0;
 		m_20_audioFormat = 0;
 		m_22_numChannels = 0;
@@ -61,7 +67,7 @@ struct WAV_HEADER
 		m_28_byteRate = 0;
 		m_32_bytesPerBlock = 0;
 		m_34_bitsPerSample = 0;
-		strcpy_s(m_36_dataSubchunkID, none);
+		cpy(none, m_36_dataSubchunkID);
 		m_40_dataSubchunkSize = 0;
 	}
 	// samples per channel
