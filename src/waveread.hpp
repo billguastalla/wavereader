@@ -7,8 +7,15 @@
 #include <istream>
 #include <set>
 
+//! Wave header
+/*!
+ Reads and stores the wave header in the same way it appears in the WAV file.
+*/
 struct WAV_HEADER
 {
+	/*!
+	* Read the first 44 bytes of the input stream into the header.
+	*/
 	bool read(std::istream& s)
 	{
 		if (s.good())
@@ -33,6 +40,9 @@ struct WAV_HEADER
 		}
 		return s.good();
 	}
+	/*!
+	* Checks whether the header is in a format that can be read by waveread
+	*/
 	bool valid() const
 	{
 		return (std::string{ &m_0_headerChunkID[0],4u } == std::string{ "RIFF" }) && // RIFF 
@@ -47,6 +57,9 @@ struct WAV_HEADER
 				(m_34_bitsPerSample == 32) // available bit depths
 				);
 	}
+	/*!
+	* Clear all data in the header setting values to 0 or "nil\0"
+	*/
 	void clear()
 	{
 		auto cpy = [](char from[4], char to[4]) // since strcpy is deprecated on windows and strcpy_s absent on *nix.
@@ -70,30 +83,42 @@ struct WAV_HEADER
 		cpy(none, m_36_dataSubchunkID);
 		m_40_dataSubchunkSize = 0;
 	}
-	// samples per channel
+	/*!
+	* Samples per channel
+	*/
 	int samples() const { return (int)(m_40_dataSubchunkSize / ((m_22_numChannels * m_34_bitsPerSample) / 8)); }
 
-	char m_0_headerChunkID[4];
-	int32_t m_4_chunkSize;
-	char m_8_format[4];
+	char m_0_headerChunkID[4]; /*!< Header chunk ID */
+	int32_t m_4_chunkSize; /*!< Chunk size*/
+	char m_8_format[4]; /*!< Format */
 
-	char m_12_subchunk1ID[4];
-	int16_t m_16_subchunk1Size;
+	char m_12_subchunk1ID[4]; /*!< Subchunk ID */
+	int16_t m_16_subchunk1Size; /*!< Subchunk size*/
 
-	int16_t m_20_audioFormat;
-	int16_t m_22_numChannels;
-	int32_t m_24_sampleRate;
-	int32_t m_28_byteRate;
-	int16_t m_32_bytesPerBlock;
-	int16_t m_34_bitsPerSample;
+	int16_t m_20_audioFormat; /*!< Audio format */
+	int16_t m_22_numChannels; /*!< Number of channels*/
+	int32_t m_24_sampleRate; /*!< Sample rate of a single channel */
+	int32_t m_28_byteRate; /*!< Number of bytes per sample*/
+	int16_t m_32_bytesPerBlock; /*!< Number of bytes per block (where a block is a single sample from each channel)*/
+	int16_t m_34_bitsPerSample; /*!< Bits per sample */
 
-	char m_36_dataSubchunkID[4];
-	int32_t m_40_dataSubchunkSize;
+	char m_36_dataSubchunkID[4]; /*!< Detailed description after the member */
+	int32_t m_40_dataSubchunkSize; /*!< Detailed description after the member */
 };
 
+//! Wave reader
+/*!
+  Reads audio from an input stream.
+*/
 class Waveread
 {
 public:
+	//! Constructor
+	/*!
+	* \param stream the input stream
+	* \param cacheSize the size of the cache. This should usually be a reasonable multiple of the size of the set of samples you expect to read each time you call audio().
+	* \param cacheExtensionThreshold Within interval [0,1]. When a caller gets audio, how far into the cache should the caller go before the cache is triggered to be extended?
+	*/
 	Waveread(
 		const std::shared_ptr<std::istream>& stream,
 		size_t cacheSize = 2048u,
@@ -116,6 +141,13 @@ public:
 
 		m_header.clear();
 	}
+	//! Copy Constructor
+	/*!
+	* WARNING: Do not operate on multiple copies of the wavereader with the same std::istream. This is not thread-safe.
+	           This constructor exists only to permit storing Waveread object in stl containers, and will
+	           be replaced by appropriate move constructor idioms in the future to make it interoperable with the caching system.
+	* \param other the other wavereader.
+	*/
 	Waveread(const Waveread& other)
 		:
 		m_stream{ other.m_stream },
@@ -128,7 +160,11 @@ public:
 		m_cacheExtensionThreshold{ other.m_cacheExtensionThreshold }
 	{
 	}
-
+	//! Reset
+	/*!
+	* Resets the wavereader, clearing all data.
+	* \param stream a new std::istream to read a wave file from.
+	*/
 	void reset(const std::shared_ptr<std::istream>& stream)
 	{
 		std::lock_guard<std::mutex> lock{ m_dataMutex };
@@ -138,6 +174,10 @@ public:
 		m_cachePos = 0u;
 		m_opened = false;
 	}
+	//! Open
+	/*!
+	* Loads the wave header from file, and fills the cache from the start.
+	*/
 	bool open()
 	{
 		if (!m_opened)
@@ -154,11 +194,22 @@ public:
 		}
 		return true; // we didn't open it, but it was already opened.
 	}
+	//! Close
+	/*!
+	* Closes the wavereader.
+	*/
 	void close()
 	{
 		reset(m_stream);
 	}
-
+	//! Audio
+	/*!
+	* Get interleaved floating point audio samples in the interval (-1.f,1.f).
+	* \param startSample index of first sample desired
+	* \param sampleCount number of samples needed including first sample
+	* \param channels Which channels would you like to retrieve. Zero-indexed. If channels are out of bounds, then their modulus with the channel count will be taken. This means if you ask for channels {0,1} from a mono file, you will retrieve two copies of the mono channel, interleaved.
+	* \param stride for each channel, when getting samples, skip every n samples where n == stride.
+	*/
 	std::vector<float> audio(size_t startSample, size_t sampleCount, std::set<uint16_t> channels = std::set<uint16_t>{0,1}, size_t stride = 0u) // Do we want to guarantee size?
 	{
 		size_t startSample_ch_bit{ startSample * m_header.m_32_bytesPerBlock };
@@ -194,9 +245,12 @@ public:
 		}
 	}
 
+	//! Get header file
 	const WAV_HEADER& header() const { return m_header; }
+	//! Get input stream 
 	std::shared_ptr<std::istream> stream() const { return m_stream; }
 private:
+	//! Load data into the cache
 	bool load(size_t pos, size_t size) // method will offset read by header size
 	{
 		size_t truncatedSize{ (pos + size) < (size_t)m_header.m_40_dataSubchunkSize
@@ -215,6 +269,7 @@ private:
 		}
 		return false;
 	}
+	//! Transform cached bytes into floats.
 	std::vector<float> samples(
 		size_t posInCache,
 		size_t size,
@@ -290,21 +345,13 @@ private:
 		return result;
 	}
 
-	bool m_opened;
-	std::shared_ptr<std::istream> m_stream;
+	bool m_opened; /*!< Has the file been opened */
+	std::shared_ptr<std::istream> m_stream; /*!< Input stream */
 
-	// Header information of wave file.
-	WAV_HEADER m_header;
-
-	// Cached data holding part of the data chunk of the WAV file.
-	std::vector<uint8_t> m_data;
-	// Mutex to lock data when buffer is being extended
-	std::mutex m_dataMutex;
-	// At what point, from the start of the data chunk (i.e. cachePos == idx - 44u), does the cached data in m_data begin at.
-	size_t m_cachePos;
-
-	// How big should the cache (all channels) be in bytes
-	size_t m_cacheSize;
-	// Within interval [0,1]. When a caller gets audio, how far into the cache should the caller go before the cache is triggered to be extended?
-	double m_cacheExtensionThreshold;
+	WAV_HEADER m_header; /*!< Holds structure of header when opened, used in subsequent operations. */
+	std::vector<uint8_t> m_data;/*!< Cached data holding part of the data chunk of the WAV file. */
+	std::mutex m_dataMutex; /*!< Mutex to lock data when buffer is being extended */
+	size_t m_cachePos; /*!< At what point, from the start of the data chunk (i.e. cachePos == idx - 44u), does the cached data in m_data begin at. */
+	size_t m_cacheSize; /*!< How big should the cache (all channels) be in bytes */
+	double m_cacheExtensionThreshold; /*!< Within interval [0,1]. When a caller gets audio, how far into the cache should the caller go before the cache is triggered to be extended? */
 };
