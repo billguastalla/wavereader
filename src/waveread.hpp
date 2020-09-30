@@ -240,7 +240,7 @@ private:
 						// NOTE: (a) see narrow_cast<T>(var) (b) addition defined in C++ as: T operator+(const T &a, const T2 &b);
 						// EXCEPTIONS: Integer types smaller than int are promoted when an operation is performed on them.
 						size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
-						int8_t v{ m_data[i + cho] - 128 }; // unsigned, so offset by 2^7
+						int v{ m_data[i + cho] - 128 }; // unsigned, so offset by 2^7
 						float v2{ (float)v / (128.f) };
 						result.push_back(v2);
 					}
@@ -252,7 +252,7 @@ private:
 					for (auto ch : channels)
 					{
 						size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
-						int16_t v{ (m_data[i + cho]) | (m_data[i + 1u + cho] << 8) };
+						int v{ (m_data[i + cho]) | (m_data[i + 1u + cho] << 8) };
 						float v2{ (float)v / (32768.f) }; // signed, so divide by 2^15
 						result.push_back(v2);
 					}
@@ -265,7 +265,7 @@ private:
 					{
 						size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
 						// 24-bit is different to others: put the value into a 32-bit int with zeros at the (LSB) end
-						int32_t v{ (m_data[i + cho] << 8) | (m_data[i + 1u + cho] << 16) | (m_data[i + 2u + cho] << 24) };
+						int v{ (m_data[i + cho] << 8) | (m_data[i + 1u + cho] << 16) | (m_data[i + 2u + cho] << 24) };
 						float v2{ (float)v / (2147483648.f) }; // divide by 2^31
 						result.push_back(v2);
 					}
@@ -277,7 +277,7 @@ private:
 					for (auto ch : channels)
 					{
 						size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
-						int32_t v{ m_data[i + cho] | (m_data[i + 1u + cho] << 8) | (m_data[i + 2u + cho] << 16) | (m_data[i + 3u + cho] << 24) };
+						int v{ m_data[i + cho] | (m_data[i + 1u + cho] << 8) | (m_data[i + 2u + cho] << 16) | (m_data[i + 3u + cho] << 24) };
 						float v2{ (float)v / (2147483648.f) }; // signed, so divide by 2^31
 						result.push_back(v2);
 					}
