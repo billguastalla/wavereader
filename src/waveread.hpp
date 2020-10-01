@@ -295,8 +295,9 @@ private:
 						// NOTE: (a) see narrow_cast<T>(var) (b) addition defined in C++ as: T operator+(const T &a, const T2 &b);
 						// EXCEPTIONS: Integer types smaller than int are promoted when an operation is performed on them.
 						size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
-						int v{ m_data[i + cho] - 128 }; // unsigned, so offset by 2^7
-						result.emplace_back((float)v / (128.f));
+						result.emplace_back((float)
+							(m_data[i + cho] - 128)  // unsigned, so offset by 2^7
+							/ (128.f)); // divide by 2^7
 					}
 				}
 				break;
@@ -306,8 +307,10 @@ private:
 					for (auto ch : channels)
 					{
 						size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
-						int v{ (m_data[i + cho]) | (m_data[i + 1u + cho] << 8) };
-						result.emplace_back((float)v / (32768.f));
+						result.emplace_back((float)
+							((m_data[i + cho]) |
+							(m_data[i + 1u + cho] << 8))
+							/ (32768.f)); // divide by 2^15
 					}
 				}
 				break;
@@ -318,8 +321,11 @@ private:
 					{
 						size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
 						// 24-bit is different to others: put the value into a 32-bit int with zeros at the (LSB) end
-						int v{ (m_data[i + cho] << 8) | (m_data[i + 1u + cho] << 16) | (m_data[i + 2u + cho] << 24) };
-						result.emplace_back((float)v / (2147483648.f)); // divide by 2^31
+						result.emplace_back((float)
+							((m_data[i + cho] << 8) |
+							(m_data[i + 1u + cho] << 16) |
+							(m_data[i + 2u + cho] << 24))
+							/ (2147483648.f)); // divide by 2^31
 					}
 				}
 				break;
@@ -329,8 +335,12 @@ private:
 					for (auto ch : channels)
 					{
 						size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
-						int v{ m_data[i + cho] | (m_data[i + 1u + cho] << 8) | (m_data[i + 2u + cho] << 16) | (m_data[i + 3u + cho] << 24) };
-						result.emplace_back((float)v / (2147483648.f));  // signed, so divide by 2^31
+						result.emplace_back((float)
+							(m_data[i + cho] | 
+							(m_data[i + 1u + cho] << 8) | 
+							(m_data[i + 2u + cho] << 16) |
+							(m_data[i + 3u + cho] << 24))
+							/ (2147483648.f));  // signed, so divide by 2^31
 					}
 				}
 				break;
