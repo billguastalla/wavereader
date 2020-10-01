@@ -296,8 +296,7 @@ private:
 						// EXCEPTIONS: Integer types smaller than int are promoted when an operation is performed on them.
 						size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
 						int v{ m_data[i + cho] - 128 }; // unsigned, so offset by 2^7
-						float v2{ (float)v / (128.f) };
-						result.push_back(v2);
+						result.emplace_back((float)v / (128.f));
 					}
 				}
 				break;
@@ -308,8 +307,7 @@ private:
 					{
 						size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
 						int v{ (m_data[i + cho]) | (m_data[i + 1u + cho] << 8) };
-						float v2{ (float)v / (32768.f) }; // signed, so divide by 2^15
-						result.push_back(v2);
+						result.emplace_back((float)v / (32768.f));
 					}
 				}
 				break;
@@ -321,8 +319,7 @@ private:
 						size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
 						// 24-bit is different to others: put the value into a 32-bit int with zeros at the (LSB) end
 						int v{ (m_data[i + cho] << 8) | (m_data[i + 1u + cho] << 16) | (m_data[i + 2u + cho] << 24) };
-						float v2{ (float)v / (2147483648.f) }; // divide by 2^31
-						result.push_back(v2);
+						result.emplace_back((float)v / (2147483648.f)); // divide by 2^31
 					}
 				}
 				break;
@@ -333,8 +330,7 @@ private:
 					{
 						size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
 						int v{ m_data[i + cho] | (m_data[i + 1u + cho] << 8) | (m_data[i + 2u + cho] << 16) | (m_data[i + 3u + cho] << 24) };
-						float v2{ (float)v / (2147483648.f) }; // signed, so divide by 2^31
-						result.push_back(v2);
+						result.emplace_back((float)v / (2147483648.f));  // signed, so divide by 2^31
 					}
 				}
 				break;
