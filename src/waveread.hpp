@@ -216,6 +216,7 @@ public:
 	* \param sampleCount number of samples needed including first sample
 	* \param channels Which channels would you like to retrieve. Zero-indexed. If channels are out of bounds, then their modulus with the channel count will be taken. This means if you ask for channels {0,1} from a mono file, you will retrieve two copies of the mono channel, interleaved.
 	* \param stride for each channel, when getting samples, skip every n samples where n == stride.
+	* \param interleaved determines how samples are ordered: true provides {C1S1, C2S1, ..., CMS1, C1S2, C2S2, ..., CMS2} false provides {C1S1, C1S2, ..., C1SN, C2S1, C2S2, ..., C2S2, ...} 
 	*/
 	std::vector<float> audio(size_t startSample, size_t sampleCount, std::set<uint16_t> channels = std::set<uint16_t>{ 0,1 }, size_t stride = 0u, bool interleaved = true) // Do we want to guarantee size?
 	{
