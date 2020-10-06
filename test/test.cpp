@@ -52,7 +52,8 @@ TEST_CASE("Check that supported files all load data.", "[asdf]")
 
 TEST_CASE("demo")
 {
-	std::shared_ptr<std::ifstream> fileStream{ new std::ifstream{"file.wav"} };
+	std::string name{ assetPath + std::string{supportedFiles[4]} };
+	std::shared_ptr<std::ifstream> fileStream{ new std::ifstream{name} };
 	Waveread r{ fileStream };
 
 	// A: two channels: the first 128 samples of the first two channels of audio.
@@ -63,7 +64,8 @@ TEST_CASE("demo")
 
 TEST_CASE("Does a moved object still produce audio data?")
 {
-	std::shared_ptr<std::ifstream> fileStream{ new std::ifstream{"file.wav"} };
+	std::string name{ assetPath + std::string{supportedFiles[4]} };
+	std::shared_ptr<std::ifstream> fileStream{ new std::ifstream{name} };
 	Waveread a{ fileStream };
 	Waveread b{ std::move(a) };
 	std::vector<float> aud{ b.audio(0, 128, { 0,1 }, 0u) };
@@ -74,6 +76,13 @@ TEST_CASE("Does a moved object still produce audio data?")
 	std::vector<Waveread> v;
 	v.push_back(std::move(b));
 
-	REQUIRE(v.back().audio(128, 128, { 0,1 }, 0u).size() != 0);
+	std::vector<float> aud2interleaved{ v.back().audio(128, 128, { 0,1 }, 0u) };
+	std::vector<float> aud2adjacent{ v.back().audio(128, 128, { 0,1 }, 0u,false)};
+
+	REQUIRE(aud2interleaved.size() != 0u);
+	REQUIRE(aud2adjacent.size() != 0u);
+
+
+
 
 }

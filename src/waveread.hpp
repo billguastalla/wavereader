@@ -307,7 +307,7 @@ private:
 				switch (m_header.m_34_bitsPerSample)
 				{
 				case 8: // unsigned 8-bit
-					for (size_t i{ posInCache }; i < size; i += (m_header.m_32_bytesPerBlock * (1u + stride)))
+					for (size_t i{ posInCache }; i < (posInCache + size); i += (m_header.m_32_bytesPerBlock * (1u + stride)))
 					{
 						for (auto ch : channels)
 						{
@@ -321,7 +321,7 @@ private:
 					}
 					break;
 				case 16: // signed 16-bit
-					for (size_t i{ posInCache }; i < size; i += (m_header.m_32_bytesPerBlock * (1u + stride)))
+					for (size_t i{ posInCache }; i < (posInCache + size); i += (m_header.m_32_bytesPerBlock * (1u + stride)))
 					{
 						for (auto ch : channels)
 						{
@@ -334,7 +334,7 @@ private:
 					}
 					break;
 				case 24: // signed 24-bit
-					for (size_t i{ posInCache }; i < size; i += (m_header.m_32_bytesPerBlock * (1u + stride)))
+					for (size_t i{ posInCache }; i < (posInCache + size); i += (m_header.m_32_bytesPerBlock * (1u + stride)))
 					{
 						for (auto ch : channels)
 						{
@@ -349,7 +349,7 @@ private:
 					}
 					break;
 				case 32: // signed 32-bit
-					for (size_t i{ posInCache }; i < size; i += (m_header.m_32_bytesPerBlock * (1u + stride)))
+					for (size_t i{ posInCache }; i < (posInCache + size); i += (m_header.m_32_bytesPerBlock * (1u + stride)))
 					{
 						for (auto ch : channels)
 						{
@@ -373,7 +373,7 @@ private:
 					for (auto ch : channels)
 					{
 						size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
-						for (size_t i{ posInCache }; i < size; i += (m_header.m_32_bytesPerBlock * (1u + stride)))
+						for (size_t i{ posInCache }; i < (posInCache + size); i += (m_header.m_32_bytesPerBlock * (1u + stride)))
 						{
 							// NOTE: (a) see narrow_cast<T>(var) (b) addition defined in C++ as: T operator+(const T &a, const T2 &b);
 							// EXCEPTIONS: Integer types smaller than int are promoted when an operation is performed on them.
@@ -387,7 +387,7 @@ private:
 					for (auto ch : channels)
 					{
 						size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
-						for (size_t i{ posInCache }; i < size; i += (m_header.m_32_bytesPerBlock * (1u + stride)))
+						for (size_t i{ posInCache }; i < (posInCache + size); i += (m_header.m_32_bytesPerBlock * (1u + stride)))
 						{
 							result.emplace_back((float)
 								((m_data[i + cho]) |
@@ -400,7 +400,7 @@ private:
 					for (auto ch : channels)
 					{
 						size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
-						for (size_t i{ posInCache }; i < size; i += (m_header.m_32_bytesPerBlock * (1u + stride)))
+						for (size_t i{ posInCache }; i < (posInCache + size); i += (m_header.m_32_bytesPerBlock * (1u + stride)))
 						{
 							// 24-bit is different to others: put the value into a 32-bit int with zeros at the (LSB) end
 							result.emplace_back((float)
@@ -415,7 +415,7 @@ private:
 					for (auto ch : channels)
 					{
 						size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
-						for (size_t i{ posInCache }; i < size; i += (m_header.m_32_bytesPerBlock * (1u + stride)))
+						for (size_t i{ posInCache }; i < (posInCache + size); i += (m_header.m_32_bytesPerBlock * (1u + stride)))
 						{
 							result.emplace_back((float)
 								(m_data[i + cho] |
