@@ -22,21 +22,20 @@ struct WAV_HEADER
 		{
 			s.seekg(0u);
 
-			s.read(&m_0_headerChunkID[0], 4);
-			s.read((char*)&m_4_chunkSize, 4);
-			s.read(&m_8_format[0], 4);
-			s.read(&m_12_subchunk1ID[0], 4);
+			s.read(&m_0_headerChunkID[0], sizeof(m_0_headerChunkID[0]));
+			s.read(reinterpret_cast<char*>(&m_4_chunkSize), sizeof(m_4_chunkSize));
+			s.read(&m_8_format[0], sizeof(m_8_format[0]));
+			s.read(&m_12_subchunk1ID[0], sizeof(m_12_subchunk1ID[0]));
+			s.read(reinterpret_cast<char*>(&m_16_subchunk1Size), sizeof(m_16_subchunk1Size));
+			s.read(reinterpret_cast<char*>(&m_20_audioFormat), sizeof(m_20_audioFormat));
+			s.read(reinterpret_cast<char*>(&m_22_numChannels), sizeof(m_22_numChannels));
+			s.read(reinterpret_cast<char*>(&m_24_sampleRate), sizeof(m_24_sampleRate));
 
-			s.read((char*)&m_16_subchunk1Size, 4);
-			s.read((char*)&m_20_audioFormat, 2);
-			s.read((char*)&m_22_numChannels, 2);
-			s.read((char*)&m_24_sampleRate, 4);
-
-			s.read((char*)&m_28_byteRate, 4);
-			s.read((char*)&m_32_bytesPerBlock, 2);
-			s.read((char*)&m_34_bitsPerSample, 2);
-			s.read(&m_36_dataSubchunkID[0], 4);
-			s.read((char*)&m_40_dataSubchunkSize, 4);
+			s.read(reinterpret_cast<char*>(&m_28_byteRate), sizeof(m_28_byteRate));
+			s.read(reinterpret_cast<char*>(&m_32_bytesPerBlock), sizeof(m_32_bytesPerBlock));
+			s.read(reinterpret_cast<char*>(&m_34_bitsPerSample), sizeof(m_34_bitsPerSample));
+			s.read(&m_36_dataSubchunkID[0], sizeof(m_36_dataSubchunkID));
+			s.read(reinterpret_cast<char*>(&m_40_dataSubchunkSize), sizeof(m_40_dataSubchunkSize));
 		}
 		return s.good();
 	}
@@ -86,7 +85,7 @@ struct WAV_HEADER
 	/*!
 	* Samples per channel
 	*/
-	int samples() const { return (int)(m_40_dataSubchunkSize / ((m_22_numChannels * m_34_bitsPerSample) / 8)); }
+	int samples() const { return (m_40_dataSubchunkSize / ((m_22_numChannels * m_34_bitsPerSample) / 8)); }
 
 	char m_0_headerChunkID[4]; /*!< Header chunk ID */
 	int32_t m_4_chunkSize; /*!< Chunk size*/
@@ -105,6 +104,7 @@ struct WAV_HEADER
 	char m_36_dataSubchunkID[4]; /*!< Detailed description after the member */
 	int32_t m_40_dataSubchunkSize; /*!< Detailed description after the member */
 };
+static_assert(sizeof(WAV_HEADER) == 44u,"WAV File header is not the expected size.");
 
 //! Wave reader
 /*!
@@ -120,8 +120,8 @@ public:
 	* \param cacheExtensionThreshold Within interval [0,1]. When a caller gets audio, how far into the cache should the caller go before the cache is triggered to be extended?
 	*/
 	Waveread(
-		const std::shared_ptr<std::istream>& stream,
-		size_t cacheSize = 2048u,
+		const std::shared_ptr<std::istream>& stream, // TODO: potentially pass rvalue reference
+		size_t cacheSize = 1048576u,
 		double cacheExtensionThreshold = 0.5
 	)
 		:
@@ -144,8 +144,8 @@ public:
 	//! Copy Constructor
 	/*!
 	* WARNING: Do not operate on multiple copies of the wavereader with the same std::istream. This is not thread-safe.
-	           This constructor exists only to permit storing Waveread object in stl containers, and will
-	           be replaced by appropriate move constructor idioms in the future to make it interoperable with the caching system.
+			   This constructor exists only to permit storing Waveread object in stl containers, and will
+			   be replaced by appropriate move constructor idioms in the future to make it interoperable with the caching system.
 	* \param other the other wavereader.
 	*/
 	Waveread(const Waveread& other)
@@ -210,7 +210,7 @@ public:
 	* \param channels Which channels would you like to retrieve. Zero-indexed. If channels are out of bounds, then their modulus with the channel count will be taken. This means if you ask for channels {0,1} from a mono file, you will retrieve two copies of the mono channel, interleaved.
 	* \param stride for each channel, when getting samples, skip every n samples where n == stride.
 	*/
-	std::vector<float> audio(size_t startSample, size_t sampleCount, std::set<uint16_t> channels = std::set<uint16_t>{0,1}, size_t stride = 0u) // Do we want to guarantee size?
+	std::vector<float> audio(size_t startSample, size_t sampleCount, std::set<uint16_t> channels = std::set<uint16_t>{ 0,1 }, size_t stride = 0u) // Do we want to guarantee size?
 	{
 		size_t startSample_ch_bit{ startSample * m_header.m_32_bytesPerBlock };
 		size_t sampleCount_ch_bit{ sampleCount * m_header.m_32_bytesPerBlock };
@@ -258,11 +258,11 @@ private:
 		if (pos < (size_t)m_header.m_40_dataSubchunkSize)
 		{
 			std::lock_guard<std::mutex> lock{ m_dataMutex };
-			m_stream->seekg(((std::streampos)pos + (std::streampos)44u)); // add header size
+			m_stream->seekg(((std::streampos)pos + (std::streampos)sizeof(WAV_HEADER))); // add header size
 			m_data.resize(truncatedSize);
 			if (m_stream->good())
 			{
-				m_stream->read((char*)&m_data[0], truncatedSize);
+				m_stream->read(reinterpret_cast<char*>(&m_data[0]), truncatedSize);
 				m_cachePos = pos;
 				return m_stream->good();
 			}
@@ -270,11 +270,19 @@ private:
 		return false;
 	}
 	//! Transform cached bytes into floats.
+	/*!
+	* \param posInCache
+	* \param size
+	* \param channels
+	* \param stride
+	* \param interleaved
+	*/
 	std::vector<float> samples(
 		size_t posInCache,
 		size_t size,
 		std::set<uint16_t> channels = std::set<uint16_t>{},
-		size_t stride = 0u) // posInCache is pos relative to cachepos.
+		size_t stride = 0u,
+		bool interleaved = true) // posInCache is pos relative to cachepos.
 	{
 		std::vector<float> result{};
 		if (
@@ -285,68 +293,132 @@ private:
 			std::lock_guard<std::mutex> lock{ m_dataMutex };
 			size_t bpc{ m_header.m_32_bytesPerBlock / (size_t)m_header.m_22_numChannels }; // bytes per channel
 
-			switch (m_header.m_34_bitsPerSample)
-			{
-			case 8: // unsigned 8-bit
-				for (size_t i{ posInCache }; i < size; i += (m_header.m_32_bytesPerBlock * (1u + stride)))
+			if (interleaved)
+				switch (m_header.m_34_bitsPerSample)
 				{
+				case 8: // unsigned 8-bit
+					for (size_t i{ posInCache }; i < size; i += (m_header.m_32_bytesPerBlock * (1u + stride)))
+					{
+						for (auto ch : channels)
+						{
+							// NOTE: (a) see narrow_cast<T>(var) (b) addition defined in C++ as: T operator+(const T &a, const T2 &b);
+							// EXCEPTIONS: Integer types smaller than int are promoted when an operation is performed on them.
+							size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
+							result.emplace_back((float)
+								(m_data[i + cho] - 128)  // unsigned, so offset by 2^7
+								/ (128.f)); // divide by 2^7
+						}
+					}
+					break;
+				case 16: // signed 16-bit
+					for (size_t i{ posInCache }; i < size; i += (m_header.m_32_bytesPerBlock * (1u + stride)))
+					{
+						for (auto ch : channels)
+						{
+							size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
+							result.emplace_back((float)
+								((m_data[i + cho]) |
+									(m_data[i + 1u + cho] << 8))
+								/ (32768.f)); // divide by 2^15
+						}
+					}
+					break;
+				case 24: // signed 24-bit
+					for (size_t i{ posInCache }; i < size; i += (m_header.m_32_bytesPerBlock * (1u + stride)))
+					{
+						for (auto ch : channels)
+						{
+							size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
+							// 24-bit is different to others: put the value into a 32-bit int with zeros at the (LSB) end
+							result.emplace_back((float)
+								((m_data[i + cho] << 8) |
+									(m_data[i + 1u + cho] << 16) |
+									(m_data[i + 2u + cho] << 24))
+								/ (2147483648.f)); // divide by 2^31
+						}
+					}
+					break;
+				case 32: // signed 32-bit
+					for (size_t i{ posInCache }; i < size; i += (m_header.m_32_bytesPerBlock * (1u + stride)))
+					{
+						for (auto ch : channels)
+						{
+							size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
+							result.emplace_back((float)
+								(m_data[i + cho] |
+									(m_data[i + 1u + cho] << 8) |
+									(m_data[i + 2u + cho] << 16) |
+									(m_data[i + 3u + cho] << 24))
+								/ (2147483648.f));  // signed, so divide by 2^31
+						}
+					}
+					break;
+				default:
+					break;
+				}
+			else
+				switch (m_header.m_34_bitsPerSample)
+				{
+				case 8: // unsigned 8-bit
 					for (auto ch : channels)
 					{
-						// NOTE: (a) see narrow_cast<T>(var) (b) addition defined in C++ as: T operator+(const T &a, const T2 &b);
-						// EXCEPTIONS: Integer types smaller than int are promoted when an operation is performed on them.
 						size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
-						result.emplace_back((float)
-							(m_data[i + cho] - 128)  // unsigned, so offset by 2^7
-							/ (128.f)); // divide by 2^7
+						for (size_t i{ posInCache }; i < size; i += (m_header.m_32_bytesPerBlock * (1u + stride)))
+						{
+							// NOTE: (a) see narrow_cast<T>(var) (b) addition defined in C++ as: T operator+(const T &a, const T2 &b);
+							// EXCEPTIONS: Integer types smaller than int are promoted when an operation is performed on them.
+							result.emplace_back((float)
+								(m_data[i + cho] - 128)  // unsigned, so offset by 2^7
+								/ (128.f)); // divide by 2^7
+						}
 					}
-				}
-				break;
-			case 16: // signed 16-bit
-				for (size_t i{ posInCache }; i < size; i += (m_header.m_32_bytesPerBlock * (1u + stride)))
-				{
+					break;
+				case 16: // signed 16-bit
 					for (auto ch : channels)
 					{
 						size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
-						result.emplace_back((float)
-							((m_data[i + cho]) |
-							(m_data[i + 1u + cho] << 8))
-							/ (32768.f)); // divide by 2^15
+						for (size_t i{ posInCache }; i < size; i += (m_header.m_32_bytesPerBlock * (1u + stride)))
+						{
+							result.emplace_back((float)
+								((m_data[i + cho]) |
+									(m_data[i + 1u + cho] << 8))
+								/ (32768.f)); // divide by 2^15
+						}
 					}
-				}
-				break;
-			case 24: // signed 24-bit
-				for (size_t i{ posInCache }; i < size; i += (m_header.m_32_bytesPerBlock * (1u + stride)))
-				{
+					break;
+				case 24: // signed 24-bit
 					for (auto ch : channels)
 					{
 						size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
-						// 24-bit is different to others: put the value into a 32-bit int with zeros at the (LSB) end
-						result.emplace_back((float)
-							((m_data[i + cho] << 8) |
-							(m_data[i + 1u + cho] << 16) |
-							(m_data[i + 2u + cho] << 24))
-							/ (2147483648.f)); // divide by 2^31
+						for (size_t i{ posInCache }; i < size; i += (m_header.m_32_bytesPerBlock * (1u + stride)))
+						{
+							// 24-bit is different to others: put the value into a 32-bit int with zeros at the (LSB) end
+							result.emplace_back((float)
+								((m_data[i + cho] << 8) |
+									(m_data[i + 1u + cho] << 16) |
+									(m_data[i + 2u + cho] << 24))
+								/ (2147483648.f)); // divide by 2^31
+						}
 					}
-				}
-				break;
-			case 32: // signed 32-bit
-				for (size_t i{ posInCache }; i < size; i += (m_header.m_32_bytesPerBlock * (1u + stride)))
-				{
+					break;
+				case 32: // signed 32-bit
 					for (auto ch : channels)
 					{
 						size_t cho{ (ch % m_header.m_22_numChannels) * bpc };
-						result.emplace_back((float)
-							(m_data[i + cho] | 
-							(m_data[i + 1u + cho] << 8) | 
-							(m_data[i + 2u + cho] << 16) |
-							(m_data[i + 3u + cho] << 24))
-							/ (2147483648.f));  // signed, so divide by 2^31
+						for (size_t i{ posInCache }; i < size; i += (m_header.m_32_bytesPerBlock * (1u + stride)))
+						{
+							result.emplace_back((float)
+								(m_data[i + cho] |
+									(m_data[i + 1u + cho] << 8) |
+									(m_data[i + 2u + cho] << 16) |
+									(m_data[i + 3u + cho] << 24))
+								/ (2147483648.f));  // signed, so divide by 2^31
+						}
 					}
+					break;
+				default:
+					break;
 				}
-				break;
-			default:
-				break;
-			}
 		}
 		return result;
 	}
