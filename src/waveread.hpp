@@ -21,21 +21,19 @@ struct WAV_HEADER
 		if (s.good())
 		{
 			s.seekg(0u);
-
-			s.read(&m_0_headerChunkID[0], sizeof(m_0_headerChunkID[0]));
-			s.read(reinterpret_cast<char*>(&m_4_chunkSize), sizeof(m_4_chunkSize));
-			s.read(&m_8_format[0], sizeof(m_8_format[0]));
-			s.read(&m_12_subchunk1ID[0], sizeof(m_12_subchunk1ID[0]));
-			s.read(reinterpret_cast<char*>(&m_16_subchunk1Size), sizeof(m_16_subchunk1Size));
-			s.read(reinterpret_cast<char*>(&m_20_audioFormat), sizeof(m_20_audioFormat));
-			s.read(reinterpret_cast<char*>(&m_22_numChannels), sizeof(m_22_numChannels));
-			s.read(reinterpret_cast<char*>(&m_24_sampleRate), sizeof(m_24_sampleRate));
-
-			s.read(reinterpret_cast<char*>(&m_28_byteRate), sizeof(m_28_byteRate));
-			s.read(reinterpret_cast<char*>(&m_32_bytesPerBlock), sizeof(m_32_bytesPerBlock));
-			s.read(reinterpret_cast<char*>(&m_34_bitsPerSample), sizeof(m_34_bitsPerSample));
-			s.read(&m_36_dataSubchunkID[0], sizeof(m_36_dataSubchunkID));
-			s.read(reinterpret_cast<char*>(&m_40_dataSubchunkSize), sizeof(m_40_dataSubchunkSize));
+			s.read(&m_0_headerChunkID[0], 4);
+			s.read((char*)&m_4_chunkSize, 4);
+			s.read(&m_8_format[0], 4);
+			s.read(&m_12_subchunk1ID[0], 4);
+			s.read((char*)&m_16_subchunk1Size, 4);
+			s.read((char*)&m_20_audioFormat, 2);
+			s.read((char*)&m_22_numChannels, 2);
+			s.read((char*)&m_24_sampleRate, 4);
+			s.read((char*)&m_28_byteRate, 4);
+			s.read((char*)&m_32_bytesPerBlock, 2);
+			s.read((char*)&m_34_bitsPerSample, 2);
+			s.read(&m_36_dataSubchunkID[0], 4);
+			s.read((char*)&m_40_dataSubchunkSize, 4);
 		}
 		return s.good();
 	}
@@ -104,7 +102,7 @@ struct WAV_HEADER
 	char m_36_dataSubchunkID[4]; /*!< Detailed description after the member */
 	int32_t m_40_dataSubchunkSize; /*!< Detailed description after the member */
 };
-static_assert(sizeof(WAV_HEADER) == 44u,"WAV File header is not the expected size.");
+static_assert(sizeof(WAV_HEADER) == 44u, "WAV File header is not the expected size.");
 
 //! Wave reader
 /*!
@@ -141,24 +139,33 @@ public:
 
 		m_header.clear();
 	}
-	//! Copy Constructor
+
+
+	Waveread(const Waveread&) = delete;
+	Waveread& operator=(const Waveread&) = delete;
+
+	//! Move Constructor
 	/*!
 	* WARNING: Do not operate on multiple copies of the wavereader with the same std::istream. This is not thread-safe.
 			   This constructor exists only to permit storing Waveread object in stl containers, and will
 			   be replaced by appropriate move constructor idioms in the future to make it interoperable with the caching system.
 	* \param other the other wavereader.
 	*/
-	Waveread(const Waveread& other)
+	Waveread(Waveread&& other) noexcept
 		:
-		m_stream{ other.m_stream },
-		m_header{ other.m_header },
-		m_data{ other.m_data },
+		m_stream{ },
+		m_header{ },
+		m_data{ },
 		m_dataMutex{},
 		m_cachePos{ other.m_cachePos },
 		m_opened{ other.m_opened },
 		m_cacheSize{ other.m_cacheSize },
 		m_cacheExtensionThreshold{ other.m_cacheExtensionThreshold }
 	{
+		std::lock_guard<std::mutex> l{ other.m_dataMutex };
+		m_data = other.m_data;
+		m_header = other.m_header;
+		m_stream = other.m_stream;
 	}
 	//! Reset
 	/*!
@@ -210,8 +217,11 @@ public:
 	* \param channels Which channels would you like to retrieve. Zero-indexed. If channels are out of bounds, then their modulus with the channel count will be taken. This means if you ask for channels {0,1} from a mono file, you will retrieve two copies of the mono channel, interleaved.
 	* \param stride for each channel, when getting samples, skip every n samples where n == stride.
 	*/
-	std::vector<float> audio(size_t startSample, size_t sampleCount, std::set<uint16_t> channels = std::set<uint16_t>{ 0,1 }, size_t stride = 0u) // Do we want to guarantee size?
+	std::vector<float> audio(size_t startSample, size_t sampleCount, std::set<uint16_t> channels = std::set<uint16_t>{ 0,1 }, size_t stride = 0u, bool interleaved = true) // Do we want to guarantee size?
 	{
+		if (!open())
+			return std::vector<float>{};
+
 		size_t startSample_ch_bit{ startSample * m_header.m_32_bytesPerBlock };
 		size_t sampleCount_ch_bit{ sampleCount * m_header.m_32_bytesPerBlock };
 
@@ -222,13 +232,13 @@ public:
 			else																					// case1B: read starts within bounds, ends out of bounds
 			{
 				load(startSample_ch_bit, m_header.m_40_dataSubchunkSize - startSample_ch_bit);
-				return samples(0u, m_header.m_40_dataSubchunkSize - startSample_ch_bit, channels, stride);
+				return samples(0u, m_header.m_40_dataSubchunkSize - startSample_ch_bit, channels, stride, interleaved);
 			}
 		}
 		else if (startSample_ch_bit >= m_cachePos &&
 			(startSample_ch_bit + sampleCount_ch_bit) <= (m_cachePos + m_data.size()))				// case2: within cache
 		{
-			std::vector<float> result{ samples(startSample_ch_bit - m_cachePos, sampleCount_ch_bit, channels, stride) };
+			std::vector<float> result{ samples(startSample_ch_bit - m_cachePos, sampleCount_ch_bit, channels, stride,interleaved) };
 			if (startSample_ch_bit > (m_cachePos + (size_t)(m_data.size() * 0.5)))					// case2A: approaching end of cache
 			{
 				std::thread extendBuffer{ &Waveread::load,this,m_cachePos + (size_t)(m_cacheSize * 0.5), m_cacheSize };
@@ -239,7 +249,7 @@ public:
 		else																						// case3: within file, outside of cache
 		{
 			if (load(startSample_ch_bit, m_cacheSize > sampleCount_ch_bit ? m_cacheSize : sampleCount_ch_bit)) // load samplecount or cachesize, whichever is greater.
-				return samples(0u, sampleCount_ch_bit, channels, stride);
+				return samples(0u, sampleCount_ch_bit, channels, stride, interleaved);
 			else
 				return std::vector<float>{};
 		}

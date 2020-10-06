@@ -32,12 +32,21 @@ TEST_CASE("Check that unsupported files are stated as unsupported.", "[asdf]" )
 	//}
 }
 
-TEST_CASE("Check that supported files are supported.", "[asdf]")
+TEST_CASE("Check that supported files all load data.", "[asdf]")
 {
-	//for (auto supported : supportedFiles)
-	//{
+	for (auto supported : supportedFiles)
+	{
+		std::string name{ assetPath + std::string{supported} };
+		std::shared_ptr<std::ifstream> fileStream{ new std::ifstream{name} };
 
-	//}
+		Waveread wr{ fileStream };
+		REQUIRE(wr.open());
+		
+		std::vector<float> f{ wr.audio(0, std::numeric_limits<size_t>::max(), { 0,1 }) };
+		std::cout << "name: " << name << "\t\tSample count: " << f.size() << std::endl;
+
+		REQUIRE(f.size() == 882u);
+	}
 
 }
 
@@ -50,4 +59,21 @@ TEST_CASE("demo")
 	std::vector<float> audio1{ r.audio(0u, 128u, { 0,1 }) };
 	// B: one channel: get 128 samples of audio with stride 1: meaning, pick every other sample.
 	std::vector<float> audio2{ r.audio(0u, 128u, {0}, 1u) };
+}
+
+TEST_CASE("Does a moved object still produce audio data?")
+{
+	std::shared_ptr<std::ifstream> fileStream{ new std::ifstream{"file.wav"} };
+	Waveread a{ fileStream };
+	Waveread b{ std::move(a) };
+	std::vector<float> aud{ b.audio(0, 128, { 0,1 }, 0u) };
+
+	REQUIRE(aud.size() != 0u);
+
+	// { Compiliation test: can we move the reader into a vector? }
+	std::vector<Waveread> v;
+	v.push_back(std::move(b));
+
+	REQUIRE(v.back().audio(128, 128, { 0,1 }, 0u).size() != 0);
+
 }
