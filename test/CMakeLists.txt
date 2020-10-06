@@ -37,12 +37,6 @@ endif()
 #   COMMAND waveioTests DATA{samples.tar})
 ExternalData_Expand_Arguments(waveioTestAssets SAMPLES_PATH DATA{samples.tar})
 
-#add_custom_command(TARGET waveioTestAssets
-#                   POST_BUILD
-#                   COMMAND DATA{samples.tar}
-#                   COMMENT "Getting test assets...")
-
-
 add_dependencies(waveioTests waveioTestAssets)
 
 set(ASSETS_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/assets)
@@ -63,5 +57,5 @@ ExternalData_Add_Target(waveioTestAssets)
 
 #find_package(Catch2 REQUIRED)
 #include(CTest)
-#include(Catch)
-#catch_discover_tests(waveioTests)
+include(${catch2_SOURCE_DIR}/contrib/Catch.cmake)
+catch_discover_tests(waveioTests)
