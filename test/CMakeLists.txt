@@ -12,8 +12,6 @@ FetchContent_MakeAvailable(Catch2)
 
 include(ExternalData)
 set(ExternalData_URL_TEMPLATES "https://billguastalla.com/binaries/wavereader/github_resources/samples.tar")
-# ISSUE: GITHUB ACTIONS EXTERNALDATA
-
 
 #set(ExternalData_CUSTOM_SCRIPT "ExternalDataCustomScript://<key>/<loc>")
 
@@ -24,6 +22,8 @@ include_directories(${WAVEIO_SOURCE_DIR}/src)
 #file(WRITE samples audioSamples)
 
 add_executable(waveioTests test.cpp)
+
+add_dependencies(waveioTests waveioTestAssets)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
    target_link_libraries(waveioTests PUBLIC Catch2::Catch2 PRIVATE Threads::Threads)
@@ -44,9 +44,8 @@ set(ExternalData_BINARY_ROOT ${ASSETS_DIRECTORY})
 add_custom_command(TARGET waveioTests
                    POST_BUILD
                    COMMAND 
-                   dir & 
-                   echo "${CMAKE_COMMAND} -E copy samples.tar ${ASSETS_DIRECTORY}/samples.tar" & 
-                   ${CMAKE_COMMAND} -E copy samples.tar ${ASSETS_DIRECTORY}/samples.tar & 
+                   echo "${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/samples.tar ${ASSETS_DIRECTORY}/samples.tar" & 
+                   ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/samples.tar ${ASSETS_DIRECTORY}/samples.tar & 
                    ${CMAKE_COMMAND} -E chdir ${ASSETS_DIRECTORY} tar vxf samples.tar
                    COMMENT "Extracting test assets...")
 
