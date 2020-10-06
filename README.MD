@@ -43,7 +43,7 @@ Like in the WAVE specification itself, samples returned from `audio(..)` are int
 ```
 C1S1 C2S1 C1S2 C2S2
 ```
-However you can ask for samples to be adjacent by setting the last parameter 'bool interleaved' in `audio()` to false. Calls made this way will produce a vector that look like this
+However you can ask for samples from each channel to be grouped together by setting the last parameter 'bool interleaved' in `audio()` to false. Calls made this way will produce a vector that look like this
 ```
 C1S1 C1S2 C2S1 C2S2
 ```
