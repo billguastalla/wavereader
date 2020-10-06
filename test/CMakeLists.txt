@@ -10,6 +10,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(Catch2)
 
+
 include(ExternalData)
 set(ExternalData_URL_TEMPLATES "https://billguastalla.com/binaries/wavereader/github_resources/samples.tar")
 
@@ -23,7 +24,6 @@ include_directories(${WAVEIO_SOURCE_DIR}/src)
 
 add_executable(waveioTests test.cpp)
 
-add_dependencies(waveioTests waveioTestAssets)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
    target_link_libraries(waveioTests PUBLIC Catch2::Catch2 PRIVATE Threads::Threads)
@@ -32,10 +32,18 @@ else()
 endif()
 
 #add_test(NAME MyTest COMMAND waveioTests)
-ExternalData_Add_Test(waveioTestAssets
-   NAME MyTest
-   COMMAND waveIOTests DATA{samples.tar})
-ExternalData_Add_Target(waveioTestAssets)
+#ExternalData_Add_Test(waveioTestAssets
+#   NAME MyTest
+#   COMMAND waveioTests DATA{samples.tar})
+ExternalData_Expand_Arguments(waveioTestAssets SAMPLES_PATH DATA{samples.tar})
+
+#add_custom_command(TARGET waveioTestAssets
+#                   POST_BUILD
+#                   COMMAND DATA{samples.tar}
+#                   COMMENT "Getting test assets...")
+
+
+add_dependencies(waveioTests waveioTestAssets)
 
 set(ASSETS_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/assets)
 file(MAKE_DIRECTORY ${ASSETS_DIRECTORY})
@@ -44,12 +52,16 @@ set(ExternalData_BINARY_ROOT ${ASSETS_DIRECTORY})
 add_custom_command(TARGET waveioTests
                    POST_BUILD
                    COMMAND 
-                   echo "${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/samples.tar ${ASSETS_DIRECTORY}/samples.tar" & 
-                   ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/samples.tar ${ASSETS_DIRECTORY}/samples.tar & 
+                   echo "${CMAKE_COMMAND} -E copy ${SAMPLES_PATH} ${ASSETS_DIRECTORY}/samples.tar" & 
+                   ${CMAKE_COMMAND} -E copy ${SAMPLES_PATH} ${ASSETS_DIRECTORY}/samples.tar & 
                    ${CMAKE_COMMAND} -E chdir ${ASSETS_DIRECTORY} tar vxf samples.tar
                    COMMENT "Extracting test assets...")
 
+ExternalData_Add_Target(waveioTestAssets)
 
+
+
+#find_package(Catch2 REQUIRED)
 #include(CTest)
 #include(Catch)
-#catch_discover_tests(foo)
+#catch_discover_tests(waveioTests)

@@ -8,6 +8,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
    find_package(Threads REQUIRED)
 endif()
 
+
 add_subdirectory(src) 
-enable_testing()
+#enable_testing()
 add_subdirectory(test)
