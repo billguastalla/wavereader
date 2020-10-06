@@ -1,6 +1,6 @@
 # waveread
 
-Release 0.1 coming soon!
+*Version 0.1 released!*
 
 <img src="https://billguastalla.com/binaries/wavereader/github_resources/wave-highlight.png" width="250" alt="audio displayed in the style of an oscilloscope">
 
@@ -66,3 +66,10 @@ To run tests, you'll need to be connected to the internet at build time, as Wave
 ## documentation
 
 See <a href="https://billguastalla.com/binaries/wavereader/docs/html/index.html">here</a>.
+
+## changelog
+
+Release 0.1:
+	- Initial release. Documentation, tests, instructions and continuous integration.
+	- Reader handles 8/16/24/32 bit uncompressed RIFF WAVE files.
+	- Reader is non-copyable but moveable into containers.
