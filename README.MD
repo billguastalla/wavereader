@@ -69,7 +69,7 @@ See <a href="https://billguastalla.com/binaries/wavereader/docs/html/index.html"
 
 ## changelog
 
-Release 0.1:
+*Release 0.1*:
 
    1. Initial release. Documentation, tests, instructions and continuous integration.
    2. Reader handles 8/16/24/32 bit uncompressed RIFF WAVE files.
