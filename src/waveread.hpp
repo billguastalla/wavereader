@@ -11,6 +11,8 @@
 /*!
  Reads and stores the wave header in the same way it appears in the WAV file.
 */
+
+constexpr size_t WAV_HEADER_DEFAULT_SIZE = 44u;
 struct WAV_HEADER
 {
 	/*!
@@ -102,7 +104,7 @@ struct WAV_HEADER
 	char m_36_dataSubchunkID[4]; /*!< Detailed description after the member */
 	int32_t m_40_dataSubchunkSize; /*!< Detailed description after the member */
 };
-static_assert(sizeof(WAV_HEADER) == 44u, "WAV File header is not the expected size.");
+static_assert(sizeof(WAV_HEADER) == WAV_HEADER_DEFAULT_SIZE, "WAV File header is not the expected size.");
 
 //! Wave reader
 /*!
@@ -118,12 +120,12 @@ public:
 	* \param cacheExtensionThreshold Within interval [0,1]. When a caller gets audio, how far into the cache should the caller go before the cache is triggered to be extended?
 	*/
 	Waveread(
-		const std::shared_ptr<std::istream>& stream, // TODO: potentially pass rvalue reference
+		std::unique_ptr<std::istream>&& stream,
 		size_t cacheSize = 1048576u,
 		double cacheExtensionThreshold = 0.5
 	)
 		:
-		m_stream{ stream },
+		m_stream{ stream.release() },
 		m_header{},
 		m_data{},
 		m_dataMutex{},
@@ -146,10 +148,12 @@ public:
 
 	//! Move Constructor
 	/*!
-	* WARNING: Do not operate on multiple copies of the wavereader with the same std::istream. This is not thread-safe.
-			   This constructor exists only to permit storing Waveread object in stl containers, and will
-			   be replaced by appropriate move constructor idioms in the future to make it interoperable with the caching system.
-	* \param other the other wavereader.
+	* \param other	Another waveread object. The move constructor enables the placement of waveread objects in containers using std::move().
+	*				For instance you can do:
+	*				Waveread a{stream};
+	*				std::vector<Waveread> readers;
+	*				readers.push_back(std::move(a))
+	*				a is now unusable, but the vector now contains the wavereader.
 	*/
 	Waveread(Waveread&& other) noexcept
 		:
@@ -165,17 +169,17 @@ public:
 		std::lock_guard<std::mutex> l{ other.m_dataMutex };
 		m_data = other.m_data;
 		m_header = other.m_header;
-		m_stream = other.m_stream;
+		m_stream.reset(other.m_stream.release());
 	}
 	//! Reset
 	/*!
 	* Resets the wavereader, clearing all data.
 	* \param stream a new std::istream to read a wave file from.
 	*/
-	void reset(const std::shared_ptr<std::istream>& stream)
+	void reset(std::unique_ptr<std::istream> && stream)
 	{
 		std::lock_guard<std::mutex> lock{ m_dataMutex };
-		m_stream = stream;
+		m_stream = std::move(stream);
 		m_data.clear();
 		m_header.clear();
 		m_cachePos = 0u;
@@ -207,7 +211,12 @@ public:
 	*/
 	void close()
 	{
-		reset(m_stream);
+		std::lock_guard<std::mutex> lock{ m_dataMutex };
+		m_stream->seekg(0u);
+		m_data.clear();
+		m_header.clear();
+		m_cachePos = 0u;
+		m_opened = false;
 	}
 	//! Audio
 	/*!
@@ -258,8 +267,6 @@ public:
 
 	//! Get header file
 	const WAV_HEADER& header() const { return m_header; }
-	//! Get input stream 
-	std::shared_ptr<std::istream> stream() const { return m_stream; }
 private:
 	//! Load data into the cache
 	bool load(size_t pos, size_t size) // method will offset read by header size
@@ -275,6 +282,7 @@ private:
 			{
 				m_stream->read(reinterpret_cast<char*>(&m_data[0]), truncatedSize);
 				m_cachePos = pos;
+				m_stream->clear(std::iostream::eofbit);
 				return m_stream->good();
 			}
 		}
@@ -435,7 +443,7 @@ private:
 	}
 
 	bool m_opened; /*!< Has the file been opened */
-	std::shared_ptr<std::istream> m_stream; /*!< Input stream */
+	std::unique_ptr<std::istream> m_stream; /*!< Input stream */
 
 	WAV_HEADER m_header; /*!< Holds structure of header when opened, used in subsequent operations. */
 	std::vector<uint8_t> m_data;/*!< Cached data holding part of the data chunk of the WAV file. */

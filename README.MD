@@ -26,13 +26,13 @@ You can include <a href="https://raw.githubusercontent.com/billguastalla/waverea
 
 int main()
 {
-	std::shared_ptr<std::ifstream> fileStream{ new std::ifstream{"file.wav"} };
-	Waveread r{ fileStream };
+	std::unique_ptr<std::istream> stream{ new std::ifstream{ "file.wav" } };
+	Waveread wr{ std::move(stream) };
 
 	// A: two channels: the first 128 samples of the first two channels of audio.
-	std::vector<float> audio1{ r.audio(0u, 128u, { 0,1 }) };
+	std::vector<float> audio1{ wr.audio(0u, 128u, { 0,1 }) };
 	// B: one channel: get 128 samples of audio with stride 1: meaning, pick every other sample.
-	std::vector<float> audio2{ r.audio(0u, 128u, {0}, 1u) };
+	std::vector<float> audio2{ wr.audio(0u, 128u, {0}, 1u) };
 }
 ```
 
