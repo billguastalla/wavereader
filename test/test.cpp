@@ -27,7 +27,7 @@ TEST_CASE("Check that unsupported files are stated as unsupported.")
 	{
 		std::string name{ assetPath + std::string{unsupported} };
 		std::unique_ptr<std::istream> fileStream{ new std::ifstream{name} };
-		Waveread waveReader{ fileStream,2048u,0.5};
+		Waveread waveReader{ std::move(fileStream),2048u,0.5};
 
 		bool opened{ waveReader.open() };
 		WAV_HEADER h{ waveReader.header() };
@@ -40,8 +40,9 @@ TEST_CASE("Check that all supported WAVE variants can load all data in file.")
 {
 	for (auto supported : supportedFiles)
 	{
-		std::string name{ assetPath + std::string{supported} };
-		Waveread wr{ std::unique_ptr<std::istream>{new std::ifstream{name}} };
+		std::string name{ assetPath + std::string{supportedFiles[4]} };
+		std::unique_ptr<std::istream> stream{ new std::ifstream{ name } };
+		Waveread wr{ std::move(stream) };
 		REQUIRE(wr.open());
 		
 		std::vector<float> f{ wr.audio(0, std::numeric_limits<size_t>::max(), { 0,1 }) };
@@ -55,12 +56,13 @@ TEST_CASE("Check that all supported WAVE variants can load all data in file.")
 TEST_CASE("demo") // No assertions: just to check that demo in README.MD compiles.
 {
 	std::string name{ assetPath + std::string{supportedFiles[4]} };
-	Waveread r{ std::unique_ptr<std::istream>{ new std::ifstream{name} } };
+	std::unique_ptr<std::istream> stream{ new std::ifstream{ name } };
+	Waveread wr{ std::move(stream) };
 
 	// A: two channels: the first 128 samples of the first two channels of audio.
-	std::vector<float> audio1{ r.audio(0u, 128u, { 0,1 }) };
+	std::vector<float> audio1{ wr.audio(0u, 128u, { 0,1 }) };
 	// B: one channel: get 128 samples of audio with stride 1: meaning, pick every other sample.
-	std::vector<float> audio2{ r.audio(0u, 128u, {0}, 1u) };
+	std::vector<float> audio2{ wr.audio(0u, 128u, {0}, 1u) };
 }
 
 TEST_CASE("Does a wavereader object moved into a container still produce audio data correctly?")
@@ -68,7 +70,8 @@ TEST_CASE("Does a wavereader object moved into a container still produce audio d
 	for (auto supported : supportedFiles)
 	{
 		std::string name{ assetPath + std::string{supported} };
-		Waveread wrA{ std::unique_ptr<std::istream>{ new std::ifstream{name} } };
+		std::unique_ptr<std::istream> stream{ new std::ifstream{ name } };
+		Waveread wrA{ std::move(stream) };
 		Waveread wrB{ std::move(wrA) };
 		std::vector<float> aud{ wrB.audio(0, 128, { 0,1 }, 0u) };
 
@@ -88,7 +91,8 @@ TEST_CASE("Do adjacent and interleaved samples produce the same audio in a diffe
 	for (auto supported : supportedFiles)
 	{
 		std::string name{ assetPath + std::string{supported} };
-		Waveread wr{ std::unique_ptr<std::istream>{ new std::ifstream{name} } };
+		std::unique_ptr<std::istream> stream{ new std::ifstream{ name } };
+		Waveread wr{ std::move(stream)};
 
 		size_t sampleCount{ 128u };
 
@@ -114,7 +118,8 @@ TEST_CASE("Does closing and and resetting the wavereader work correctly?")
 	for (auto supported : supportedFiles)
 	{
 		std::string name{ assetPath + std::string{supported} };
-		Waveread wr{ std::unique_ptr<std::istream>{ new std::ifstream{name} } };
+		std::unique_ptr<std::istream> stream{ new std::ifstream{ name } };
+		Waveread wr{ std::move(stream) };
 
 		size_t sampleCount{ 64u };
 
