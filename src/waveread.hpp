@@ -11,6 +11,8 @@
 /*!
  Reads and stores the wave header in the same way it appears in the WAV file.
 */
+
+constexpr size_t WAV_HEADER_DEFAULT_SIZE = 44u;
 struct WAV_HEADER
 {
 	/*!
@@ -102,7 +104,7 @@ struct WAV_HEADER
 	char m_36_dataSubchunkID[4]; /*!< Detailed description after the member */
 	int32_t m_40_dataSubchunkSize; /*!< Detailed description after the member */
 };
-static_assert(sizeof(WAV_HEADER) == 44u, "WAV File header is not the expected size.");
+static_assert(sizeof(WAV_HEADER) == WAV_HEADER_DEFAULT_SIZE, "WAV File header is not the expected size.");
 
 //! Wave reader
 /*!
@@ -177,7 +179,7 @@ public:
 	void reset(std::unique_ptr<std::istream> && stream)
 	{
 		std::lock_guard<std::mutex> lock{ m_dataMutex };
-		m_stream.reset(stream.release());
+		m_stream = std::move(stream);
 		m_data.clear();
 		m_header.clear();
 		m_cachePos = 0u;
@@ -209,7 +211,12 @@ public:
 	*/
 	void close()
 	{
-		reset(std::move(m_stream));
+		std::lock_guard<std::mutex> lock{ m_dataMutex };
+		m_stream->seekg(0u);
+		m_data.clear();
+		m_header.clear();
+		m_cachePos = 0u;
+		m_opened = false;
 	}
 	//! Audio
 	/*!
@@ -275,6 +282,7 @@ private:
 			{
 				m_stream->read(reinterpret_cast<char*>(&m_data[0]), truncatedSize);
 				m_cachePos = pos;
+				m_stream->clear(std::iostream::eofbit);
 				return m_stream->good();
 			}
 		}
