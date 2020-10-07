@@ -8,10 +8,10 @@
 ![Language](https://img.shields.io/badge/language-C++-blue.svg?style=flat-square)
 ![CMake](https://github.com/billguastalla/wavereader/workflows/CMake/badge.svg?branch=master)
 
-Waveread is a reluctant re-invention of the wheel, arising from the absence of a modern WAV file reader library with a low memory footprint.
+Waveread is a reluctant re-invention of the wheel, arising from the absence of a modern WAV file reader library with a caching system and a low memory footprint.
 So this is what it is, a tiny C++11 library that reads audio from common variants of the WAVE file specification.
 
-It leaves the IO implementation to the std::istream you provide it with. It has a caching mechanism to minimise memory footprint, which will load audio in the background, emulating the buffering effect of an online player.
+It leaves the IO implementation to the std::istream you provide it with. The caching system will load audio in the background, emulating the buffering effect of an online player.
 
 <img src="https://billguastalla.com/binaries/wavereader/github_resources/loadingbar.png" width="250" alt="media player loading bar">
 
