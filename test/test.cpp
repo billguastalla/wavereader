@@ -37,9 +37,7 @@ TEST_CASE("Check that supported files all load data.", "[asdf]")
 	for (auto supported : supportedFiles)
 	{
 		std::string name{ assetPath + std::string{supported} };
-		std::shared_ptr<std::ifstream> fileStream{ new std::ifstream{name} };
-
-		Waveread wr{ fileStream };
+		Waveread wr{ std::unique_ptr<std::istream>{new std::ifstream{name}} };
 		REQUIRE(wr.open());
 		
 		std::vector<float> f{ wr.audio(0, std::numeric_limits<size_t>::max(), { 0,1 }) };
@@ -53,8 +51,7 @@ TEST_CASE("Check that supported files all load data.", "[asdf]")
 TEST_CASE("demo")
 {
 	std::string name{ assetPath + std::string{supportedFiles[4]} };
-	std::shared_ptr<std::ifstream> fileStream{ new std::ifstream{name} };
-	Waveread r{ fileStream };
+	Waveread r{ std::unique_ptr<std::istream>{ new std::ifstream{name} } };
 
 	// A: two channels: the first 128 samples of the first two channels of audio.
 	std::vector<float> audio1{ r.audio(0u, 128u, { 0,1 }) };
@@ -65,8 +62,7 @@ TEST_CASE("demo")
 TEST_CASE("Does a moved object still produce audio data?")
 {
 	std::string name{ assetPath + std::string{supportedFiles[4]} };
-	std::shared_ptr<std::ifstream> fileStream{ new std::ifstream{name} };
-	Waveread a{ fileStream };
+	Waveread a{ std::unique_ptr<std::istream>{ new std::ifstream{name} } };
 	Waveread b{ std::move(a) };
 	std::vector<float> aud{ b.audio(0, 128, { 0,1 }, 0u) };
 
