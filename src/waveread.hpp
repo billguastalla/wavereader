@@ -120,7 +120,7 @@ public:
 	* \param cacheExtensionThreshold Within interval [0,1]. When a caller gets audio, how far into the cache should the caller go before the cache is triggered to be extended?
 	*/
 	Waveread(
-		std::unique_ptr<std::istream>& stream, // TODO: potentially pass rvalue reference
+		std::unique_ptr<std::istream>&& stream,
 		size_t cacheSize = 1048576u,
 		double cacheExtensionThreshold = 0.5
 	)
