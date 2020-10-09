@@ -65,7 +65,7 @@ To run tests, you'll need to be connected to the internet at build time, as Wave
 
 ## documentation
 
-See <a href="https://billguastalla.com/binaries/wavereader/docs/html/index.html">here</a>.
+Documentation is <a href="https://billguastalla.com/binaries/wavereader/docs/html/index.html">here</a> and the waveread class is <a href="https://billguastalla.com/binaries/wavereader/docs/html/class_waveread.html">here</a>.
 
 ## changelog
 
