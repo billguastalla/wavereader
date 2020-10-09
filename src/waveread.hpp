@@ -7,12 +7,12 @@
 #include <istream>
 #include <set>
 
+
+constexpr size_t WAV_HEADER_DEFAULT_SIZE = 44u;
 //! Wave header
 /*!
  Reads and stores the wave header in the same way it appears in the WAV file.
 */
-
-constexpr size_t WAV_HEADER_DEFAULT_SIZE = 44u;
 struct WAV_HEADER
 {
 	/*!
@@ -67,7 +67,6 @@ struct WAV_HEADER
 				to[i] = from[i];
 		};
 		char none[4]{ "nil" };
-
 		cpy(none, m_0_headerChunkID);
 		m_4_chunkSize = 0;
 		cpy(none, m_8_format);
@@ -142,7 +141,6 @@ public:
 		m_header.clear();
 	}
 
-
 	Waveread(const Waveread&) = delete;
 	Waveread& operator=(const Waveread&) = delete;
 
@@ -176,7 +174,7 @@ public:
 	* Resets the wavereader, clearing all data.
 	* \param stream a new std::istream to read a wave file from.
 	*/
-	void reset(std::unique_ptr<std::istream> && stream)
+	void reset(std::unique_ptr<std::istream>&& stream)
 	{
 		std::lock_guard<std::mutex> lock{ m_dataMutex };
 		m_stream = std::move(stream);
@@ -225,9 +223,15 @@ public:
 	* \param sampleCount number of samples needed including first sample
 	* \param channels Which channels would you like to retrieve. Zero-indexed. If channels are out of bounds, then their modulus with the channel count will be taken. This means if you ask for channels {0,1} from a mono file, you will retrieve two copies of the mono channel, interleaved.
 	* \param stride for each channel, when getting samples, skip every n samples where n == stride.
-	* \param interleaved determines how samples are ordered: true provides {C1S1, C2S1, ..., CMS1, C1S2, C2S2, ..., CMS2} false provides {C1S1, C1S2, ..., C1SN, C2S1, C2S2, ..., C2S2, ...} 
+	* \param interleaved determines how samples are ordered: true provides {C1S1, C2S1, ..., CMS1, C1S2, C2S2, ..., CMS2} false provides {C1S1, C1S2, ..., C1SN, C2S1, C2S2, ..., C2S2, ...}
 	*/
-	std::vector<float> audio(size_t startSample, size_t sampleCount, std::set<uint16_t> channels = std::set<uint16_t>{ 0,1 }, size_t stride = 0u, bool interleaved = true) // Do we want to guarantee size?
+	std::vector<float> audio(
+		size_t startSample, 
+		size_t sampleCount, 
+		std::set<int> channels = std::set<int>{ 0,1 }, 
+		size_t stride = 0u, 
+		bool interleaved = true
+	)
 	{
 		if (!open())
 			return std::vector<float>{};
@@ -267,15 +271,37 @@ public:
 
 	//! Get header file
 	const WAV_HEADER& header() const { return m_header; }
+	//! Get size of caches
+	const size_t& cacheSize() const { return m_cacheSize; }
+	//! Get start position of cache
+	const size_t& cachePos() const { return m_cachePos; }
+	//! Has the file been opened
+	const bool& opened() const { return m_opened; }
+	//! Get cache extension threshold: this is the fraction of the cache that is read before it is extended.
+	const double& cacheExtensionThreshold() const { return m_cacheExtensionThreshold; }
+
+
+	//! Set cache extension threshold. Does not extend the cache until audio() has been called. Function will halt until the last load operation has finished.
+	void setCacheExtensionThreshold(const double& cacheExtensionThreshold)
+	{
+		std::lock_guard<std::mutex> l{ m_dataMutex };
+		m_cacheExtensionThreshold = cacheExtensionThreshold;
+	}
+	//! Set cache size. Does not extend the cache until audio() has been called. Function will halt until the last load operation has finished.
+	void setCacheSize(const size_t& csize)
+	{
+		std::lock_guard<std::mutex> l{ m_dataMutex };
+		m_cacheSize = csize;
+	}
 private:
 	//! Load data into the cache
 	bool load(size_t pos, size_t size) // method will offset read by header size
 	{
+		std::lock_guard<std::mutex> lock{ m_dataMutex };
 		size_t truncatedSize{ (pos + size) < (size_t)m_header.m_40_dataSubchunkSize
 			? size : (size_t)m_header.m_40_dataSubchunkSize - pos };
 		if (pos < (size_t)m_header.m_40_dataSubchunkSize)
 		{
-			std::lock_guard<std::mutex> lock{ m_dataMutex };
 			m_stream->seekg(((std::streampos)pos + (std::streampos)sizeof(WAV_HEADER))); // add header size
 			m_data.resize(truncatedSize);
 			if (m_stream->good())
@@ -299,7 +325,7 @@ private:
 	std::vector<float> samples(
 		size_t posInCache,
 		size_t size,
-		std::set<uint16_t> channels = std::set<uint16_t>{},
+		std::set<int> channels = std::set<int>{},
 		size_t stride = 0u,
 		bool interleaved = true) // posInCache is pos relative to cachepos.
 	{
