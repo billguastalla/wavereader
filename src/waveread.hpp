@@ -271,7 +271,7 @@ public:
 
 	//! Get header file
 	const WAV_HEADER& header() const { return m_header; }
-	//! Get size of caches
+	//! Get size of cache
 	const size_t& cacheSize() const { return m_cacheSize; }
 	//! Get start position of cache
 	const size_t& cachePos() const { return m_cachePos; }
