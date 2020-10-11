@@ -4,9 +4,10 @@
 
 <img src="https://billguastalla.com/binaries/wavereader/github_resources/wave-highlight.png" width="250" alt="audio displayed in the style of an oscilloscope">
 
-![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square) 
 ![Language](https://img.shields.io/badge/language-C++-blue.svg?style=flat-square)
 ![CMake](https://github.com/billguastalla/wavereader/workflows/CMake/badge.svg?branch=master)
+
+![License](https://img.shields.io/badge/license-MIT-orange.svg?style=flat-square) 
 [![Code Review](https://www.zomis.net/codereview/shield/?qid=250440)](https://codereview.stackexchange.com/q/250440/231226)
 
 Waveread is a reluctant re-invention of the wheel, arising from the absence of a modern WAV file reader library with a caching mechanism and a low memory footprint.
