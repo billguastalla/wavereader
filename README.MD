@@ -4,11 +4,11 @@
 
 <img src="https://billguastalla.com/binaries/wavereader/github_resources/wave-highlight.png" width="250" alt="audio displayed in the style of an oscilloscope">
 
-![Language](https://img.shields.io/badge/language-C++-blue.svg?style=flat-square)
-![CMake](https://github.com/billguastalla/wavereader/workflows/CMake/badge.svg?branch=master)
+[![Language](https://img.shields.io/badge/language-C++-red.svg?style=flat-square)](https://github.com/billguastalla/wavereader/blob/master/src/waveread.hpp)
+[![CMake](https://github.com/billguastalla/wavereader/workflows/CMake/badge.svg?branch=master)](https://github.com/billguastalla/wavereader/actions?query=workflow%3ACMake)
 
-![License](https://img.shields.io/badge/license-MIT-orange.svg?style=flat-square) 
 [![Code Review](https://www.zomis.net/codereview/shield/?qid=250440)](https://codereview.stackexchange.com/q/250440/231226)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/billguastalla/wavereader/blob/master/LICENSE.MD))
 
 Waveread is a reluctant re-invention of the wheel, arising from the absence of a modern WAV file reader library with a caching mechanism and a low memory footprint.
 So this is what it is, a tiny C++11 library that reads audio from common variants of the WAVE file specification.
@@ -21,7 +21,7 @@ Waveread supports uncompressed WAVE files with 8-bit unsigned, or 16,24,32-bit s
 
 ## usage
 
-You can include <a href="https://raw.githubusercontent.com/billguastalla/wavereader/master/src/waveread.h">waveread.h</a> in your project as a single file. Construct a `std::istream`, pass it to a `std::unique_ptr` and provide that to an instance of `Waveread`. Then get audio using `audio()`
+You can include <a href="https://raw.githubusercontent.com/billguastalla/wavereader/master/src/waveread.hpp">waveread.hpp</a> in your project as a single file. Construct a `std::istream`, pass it to a `std::unique_ptr` and provide that to an instance of `Waveread`. Then get audio using `audio()`
 
 ```cpp
 #include <waveread.h>
