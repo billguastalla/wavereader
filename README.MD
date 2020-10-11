@@ -7,6 +7,7 @@
 ![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square) 
 ![Language](https://img.shields.io/badge/language-C++-blue.svg?style=flat-square)
 ![CMake](https://github.com/billguastalla/wavereader/workflows/CMake/badge.svg?branch=master)
+[![Code Review](https://www.zomis.net/codereview/shield/?qid=250440)](https://codereview.stackexchange.com/q/250440/231226)
 
 Waveread is a reluctant re-invention of the wheel, arising from the absence of a modern WAV file reader library with a caching mechanism and a low memory footprint.
 So this is what it is, a tiny C++11 library that reads audio from common variants of the WAVE file specification.
